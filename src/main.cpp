@@ -29,11 +29,26 @@ float crossTrackDistanceMeasured;
 float steering;
 int steeringCommand;
 
+// Unsmooothed
+// const float waypoints[][2] = {
+//     {0.00f, 0.00f},
+//     {1.00f, 0.00f},
+//     {2.00f, 0.00f},
+//     {2.00f, 0.50f},
+//     {2.00f, 1.00f},
+//     {3.00f, 1.00f},
+//     {5.00f, 1.00f}
+// };
+
+// Smooothed
 const float waypoints[][2] = {
     {0.00f, 0.00f},
-    {5.00f, 0.00f},
-    {5.00f, 0.30f},
-    {0.00f, 0.30f},
+    {1.00f, 0.00f},
+    {1.60f, 0.20f},
+    {1.84f, 0.58f},
+    {2.336f, 0.832f},
+    {3.5344f, 0.9328f},
+    {5.00f, 1.00f}
 };
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
@@ -48,7 +63,7 @@ void setup()
     robot.initialize();
     robot.setPose(0.0f, 0.0f, 0.0f);
     speedMeter.initialize();
-    distanceMeter.initialize(&robot, waypoints, 4);
+    distanceMeter.initialize(&robot, waypoints, 7);
     speedPid.initialize(SPEED_P, SPEED_I,
         SPEED_D, SPEED_COMMAND_FORWARD, SPEED_COMMAND_NEUTRAL);
     steeringPid.initialize(STEERING_P, STEERING_I,
