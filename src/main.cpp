@@ -2,6 +2,7 @@
 #include "Robot.hpp"
 #include "SpeedMeter.hpp"
 #include "DistanceMeter.hpp"
+#include "SpeedRecommender.hpp"
 #include "Pid.hpp"
 
 #include <Servo.h>
@@ -11,6 +12,7 @@ Servo steeringServo;
 Robot robot;
 SpeedMeter speedMeter;
 DistanceMeter distanceMeter;
+SpeedRecommender speedRecommender;
 Pid speedPid;
 Pid steeringPid;
 
@@ -29,31 +31,20 @@ float crossTrackDistanceMeasured;
 float steering;
 int steeringCommand;
 
-// Unsmooothed
-// const float waypoints[][2] = {
-//     {0.00f, 0.00f},
-//     {1.00f, 0.00f},
-//     {2.00f, 0.00f},
-//     {2.00f, 0.50f},
-//     {2.00f, 1.00f},
-//     {3.00f, 1.00f},
-//     {5.00f, 1.00f}
-// };
-
-// Smooothed
-const float waypoints[][2] = {
-    {0.00f, 0.00f},
-    {1.00f, 0.00f},
-    {1.60f, 0.20f},
-    {1.84f, 0.58f},
-    {2.336f, 0.832f},
-    {3.5344f, 0.9328f},
-    {5.00f, 1.00f}
+const float waypoints[][3] = {
+    {0.00f,  0.00f, 1.00f},
+    {2.00f,  0.00f, 0.50f},
+    {3.05f,  0.22f, 1.00f},
+    {3.63f,  0.54f, 0.50f},
+    {3.96f,  0.92f, 0.50f},
+    {4.63f,  1.11f, 0.50f},
+    {6.22f,  1.20f, 1.00f},
+    {7.80f,  1.30f, 0.00f}
 };
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 {
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 void setup()
@@ -63,7 +54,8 @@ void setup()
     robot.initialize();
     robot.setPose(0.0f, 0.0f, 0.0f);
     speedMeter.initialize();
-    distanceMeter.initialize(&robot, waypoints, 7);
+    distanceMeter.initialize(&robot, waypoints, 8);
+    speedRecommender.initialize(&distanceMeter);
     speedPid.initialize(SPEED_P, SPEED_I,
         SPEED_D, SPEED_COMMAND_FORWARD, SPEED_COMMAND_NEUTRAL);
     steeringPid.initialize(STEERING_P, STEERING_I,
@@ -75,7 +67,7 @@ void setup()
     frameCounter = 0;
 
     reached = false;
-    speedDesired = DESIRED_SPEED;
+    speedDesired = 0.0f;
     speedMeasured = 0.0f;
     speedCommandRaw = 0.0f;
     speedCommand = 0;
@@ -102,13 +94,11 @@ void loop()
         if (distanceMeter.goalReached()) {
             reached = true;
         }
+        speedDesired = speedRecommender.getRecommendedSpeed() * (!reached);
         robot.updatePose(steering, speedMeasured, currentTime);
         if (frameCounter % 40 == 0) {
             // 25 Hz Task
             speedMeasured = speedMeter.read(currentTime);
-            if (reached) {
-                speedDesired = 0.0f;
-            }
             speedCommandRaw = speedPid.update(speedDesired,
               speedMeasured, currentTime);
             speedCommand  = (int)mapf(speedCommandRaw,

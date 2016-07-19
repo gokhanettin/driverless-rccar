@@ -2,10 +2,10 @@
 #include "DistanceMeter.hpp"
 #include "Robot.hpp"
 
-void DistanceMeter::initialize(const Robot* car, const float (*waypoints)[2],
+void DistanceMeter::initialize(const Robot* robot, const float (*waypoints)[3],
 int waypointsLen)
 {
-    m_car = car;
+    m_robot = robot;
     m_waypoints = waypoints;
     m_waypointsLen = waypointsLen;
     m_index = 0;
@@ -13,9 +13,9 @@ int waypointsLen)
 
 float DistanceMeter::readCrossTrackDistance()
 {
-    float x = m_car->x();
-    float y = m_car->y();
-    const float (*p)[2] = m_waypoints;
+    float x = m_robot->x();
+    float y = m_robot->y();
+    const float (*p)[3] = m_waypoints;
     int i = m_index;
 
     float p0p[] = {x - p[i][0], y - p[i][1]};
@@ -34,13 +34,18 @@ float DistanceMeter::readCrossTrackDistance()
     return c;
 }
 
-boolean DistanceMeter::goalReached()
+boolean DistanceMeter::goalReached() const
 {
     const float *goal = m_waypoints[m_waypointsLen - 1];
-    float x = m_car->x();
-    float y = m_car->y();
+    float x = m_robot->x();
+    float y = m_robot->y();
     float dx = goal[0] - x;
     float dy = goal[1] - y;
     float d =  sqrt(dx * dx + dy * dy);
     return d < ROBOT_GOAL_SENSITIVITY;
+}
+
+float DistanceMeter::getSpeedHint() const
+{
+    return m_waypoints[m_index][2];
 }

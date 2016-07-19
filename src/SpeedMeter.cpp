@@ -3,22 +3,22 @@
 
 void SpeedMeter::initialize()
 {
-  m_previousTime = micros();
-  m_pulse = 0;
-  m_isFalling = false;
-  pinMode(HW_SPEED_SENSOR_PIN, INPUT);
+    m_previousTime = micros();
+    m_pulse = 0;
+    m_isFalling = false;
+    pinMode(HW_SPEED_SENSOR_PIN, INPUT);
 }
 
 void SpeedMeter::readRaw()
 {
-  if (digitalRead(HW_SPEED_SENSOR_PIN) == 0) {
-    if (!m_isFalling) {
-      m_pulse++;
+    if (digitalRead(HW_SPEED_SENSOR_PIN) == 0) {
+        if (!m_isFalling) {
+            m_pulse++;
+        }
+        m_isFalling = true;
+    } else {
+        m_isFalling = false;
     }
-    m_isFalling = true;
-  } else {
-      m_isFalling = false;
-  }
 }
 
 float SpeedMeter::read(long currentTime)

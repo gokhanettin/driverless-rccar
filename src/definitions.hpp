@@ -7,9 +7,9 @@
 // Abs max steering angle in radians
 #define ROBOT_MAX_STEERING (PI/10.0f)
 // Robot length in meter
-#define ROBOT_LENGTH (0.286f)
+#define ROBOT_LENGTH (0.275f)
 // Displacement per shaft revolution
-#define ROBOT_SHAFT_DPR (0.105f)
+#define ROBOT_SHAFT_DPR (0.095f)
 // Sensor pulses per shaft revolution
 #define ROBOT_SHAFT_PPR (8)
 // Sensitivity to stop when we are close enough to the goal
@@ -45,6 +45,6 @@
 #define STEERING_RIGHT (-ROBOT_MAX_STEERING)
 
 // Desired values
-#define DESIRED_SPEED (1.0f)
+#define DESIRED_MAX_SPEED (2.0f)
 #define DESIRED_CROSS_TRACK_DISTANCE (0.0f)
 #endif
