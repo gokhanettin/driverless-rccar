@@ -45,6 +45,6 @@
 #define STEERING_RIGHT (-ROBOT_MAX_STEERING)
 
 // Desired values
-#define DESIRED_MAX_SPEED (2.0f)
+#define DESIRED_MAX_SPEED (8.0f)
 #define DESIRED_CROSS_TRACK_DISTANCE (0.0f)
 #endif

@@ -32,15 +32,30 @@ float steering;
 int steeringCommand;
 
 const float waypoints[][3] = {
-    {0.00f,  0.00f, 1.00f},
-    {2.00f,  0.00f, 0.50f},
-    {3.05f,  0.22f, 1.00f},
-    {3.63f,  0.54f, 0.50f},
-    {3.96f,  0.92f, 0.50f},
-    {4.63f,  1.11f, 0.50f},
-    {6.22f,  1.20f, 1.00f},
-    {7.80f,  1.30f, 0.00f}
+    {0.00f,  0.00f, 1.50f},
+    {2.00f,  0.00f, 0.75f},
+    {3.75f,  0.00f, 0.75f},
+    {4.63f,  0.25f, 0.75f},
+    {5.06f,  0.63f, 1.00f},
+    {5.28f,  1.06f, 1.00f},
+    {5.40f,  1.53f, 1.00f},
+    {5.45f,  2.01f, 1.00f},
+    {5.47f,  2.50f, 1.00f},
+    {5.50f,  3.00f, 0.00f}
 };
+
+// const float waypoints[][3] = {
+//     {0.00f,  0.00f, 1.50f},
+//     {2.00f,  0.00f, 1.50f},
+//     {3.75f,  0.00f, 1.50f},
+//     {4.63f,  0.25f, 1.50f},
+//     {5.06f,  0.63f, 1.50f},
+//     {5.28f,  1.06f, 1.50f},
+//     {5.40f,  1.53f, 1.50f},
+//     {5.45f,  2.01f, 1.50f},
+//     {5.47f,  2.50f, 1.50f},
+//     {5.50f,  3.00f, 0.00f}
+// };
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 {
@@ -54,7 +69,7 @@ void setup()
     robot.initialize();
     robot.setPose(0.0f, 0.0f, 0.0f);
     speedMeter.initialize();
-    distanceMeter.initialize(&robot, waypoints, 8);
+    distanceMeter.initialize(&robot, waypoints, 10);
     speedRecommender.initialize(&distanceMeter);
     speedPid.initialize(SPEED_P, SPEED_I,
         SPEED_D, SPEED_COMMAND_FORWARD, SPEED_COMMAND_NEUTRAL);
@@ -106,8 +121,8 @@ void loop()
                SPEED_COMMAND_NEUTRAL, SPEED_COMMAND_FORWARD);
             speedServo.writeMicroseconds(speedCommand);
         }
-        if (frameCounter % 50 == 0) {
-            // 20 Hz Task
+        if (frameCounter % 25 == 0) {
+            // 40 Hz Task
             crossTrackDistanceMeasured = distanceMeter.readCrossTrackDistance();
             steering = steeringPid.update(crossTrackDistanceDesired,
               crossTrackDistanceMeasured, currentTime);
