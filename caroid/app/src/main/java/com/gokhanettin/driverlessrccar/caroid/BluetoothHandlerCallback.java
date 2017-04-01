@@ -15,19 +15,18 @@ abstract class BluetoothHandlerCallback implements Handler.Callback {
                 onConnectionStateChanged(msg.arg1);
                 break;
             case BluetoothClient.MESSAGE_RECEIVE:
-                BluetoothClient.ReceivedData data = (BluetoothClient.ReceivedData) msg.obj;
-                onDataReceived(data.speedCommand, data.steeringCommand,
-                        data.speed, data.steering);
+                BluetoothClient.Input in = (BluetoothClient.Input) msg.obj;
+                onReceived(in.speedCommand, in.steeringCommand, in.speed, in.steering);
                 break;
             case BluetoothClient.MESSAGE_SEND:
-                int[] commands = (int[])msg.obj;
-                onCommandsSent(commands[0], commands[1]);
+                BluetoothClient.Output out = (BluetoothClient.Output) msg.obj;
+                onSent(out.speedCommand, out.steeringCommand);
                 break;
             case BluetoothClient.MESSAGE_COMMUNICATION_MODE_CHANGE:
                 String mode = msg.getData().getString(BluetoothClient.COMMUNICATION_MODE);
                 onCommunicationModeChanged(mode);
                 break;
-            case BluetoothClient.MESSAGE_DEVICE_NAME:
+            case BluetoothClient.MESSAGE_CONNECTION_ESTABLISHED:
                 String deviceName = msg.getData().getString(BluetoothClient.DEVICE_NAME);
                 onConnectionEstablished(deviceName);
                 break;
@@ -39,9 +38,9 @@ abstract class BluetoothHandlerCallback implements Handler.Callback {
         return true;
     }
     protected abstract void onConnectionStateChanged(int newState);
-    protected abstract void onDataReceived(int speedCmd, int steeringCmd,
-                                           float speed, float steering);
-    protected abstract void onCommandsSent(int speedCmd, int steeringCmd);
+    protected abstract void onReceived(int speedCmd, int steeringCmd,
+                                       float speed, float steering);
+    protected abstract void onSent(int speedCmd, int steeringCmd);
     protected abstract void onCommunicationModeChanged(String newMode);
     protected abstract void onConnectionEstablished(String connectedDeviceName);
     protected abstract void onConnectionError(String error);

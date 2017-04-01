@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -15,14 +17,27 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".ArduinoActivity"
             android:parentActivityName=".MainActivity" />
-        <activity android:name=".DeviceListActivity"
+        <activity
+            android:name=".DeviceListActivity"
+            android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".CameraActivity"
+            android:parentActivityName=".MainActivity"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ConnectionActivity"
             android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".AcquisitionActivity"
+            android:parentActivityName=".MainActivity"
+            android:screenOrientation="landscape"/>
     </application>
 
 </manifest>

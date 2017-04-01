@@ -32,14 +32,20 @@ public class MainActivity extends AppCompatActivity {
         buttonCameraOnly.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO
+                Intent intent = new Intent(MainActivity.this,
+                        CameraActivity.class);
+                Log.d(TAG, "Starting CameraActivity");
+                startActivity(intent);
             }
         });
 
         buttonDataAcquisition.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO
+                Intent intent = new Intent(MainActivity.this,
+                        AcquisitionActivity.class);
+                Log.d(TAG, "Starting AcquisitionActivity");
+                startActivity(intent);
             }
         });
 

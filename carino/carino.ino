@@ -205,8 +205,8 @@ void loop()
         ++frameCounter;
         // 1000 Hz Task
 
-        if (frameCounter % 20 == 0) {
-            // 50 Hz Task
+        if (frameCounter % 40 == 0) {
+            // 25 Hz Task
             serialRead();
             if (mode == CO_COMM) {
                 speedCommand = serial[SPEED_COMMAND];
@@ -221,8 +221,8 @@ void loop()
             speedServo.writeMicroseconds(speedCommand);
             steeringServo.writeMicroseconds(steeringCommand);
         }
-        if (frameCounter % 25 == 0) {
-            // 40 Hz Task
+        if (frameCounter % 50 == 0) {
+            // 20 Hz Task
             speed = getSpeed();
             steering = getSteering();
             if (mode != NO_COMM) {

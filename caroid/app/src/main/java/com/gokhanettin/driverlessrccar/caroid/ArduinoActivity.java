@@ -89,9 +89,9 @@ public class ArduinoActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 String address = data.getStringExtra(DeviceListActivity.EXTRA_BT_ADDRESS);
                 Log.d(TAG, "Device address received: " + address);
-                mBluetoothClient = new BluetoothClient(address, mHandler);
+                mBluetoothClient = new BluetoothClient(mHandler);
                 Log.d(TAG, "Connecting...");
-                mBluetoothClient.connect();
+                mBluetoothClient.connect(address);
             } else {
                 finish();
             }
@@ -179,10 +179,10 @@ public class ArduinoActivity extends AppCompatActivity {
                 }
 
                 @Override
-                protected void onDataReceived(int speedCmd, int steeringCmd,
-                                             float speed, float steering) {
+                protected void onReceived(int speedCmd, int steeringCmd,
+                                          float speed, float steering) {
                     Locale locale = Locale.getDefault();
-                    Log.d(TAG, "onDataReceived: " + String.format(locale,
+                    Log.d(TAG, "onReceived: " + String.format(locale,
                             "[%d;%d;%.2f;%.2f]", speedCmd, steeringCmd, speed, steering));
 
                     mTextViewSpeedCmd.setText(String.format(locale, "%d", speedCmd));
@@ -193,12 +193,12 @@ public class ArduinoActivity extends AppCompatActivity {
                     mReceiveSteeringCmd = steeringCmd;
 
                     // Send commands only when we receive data to stay in sync
-                    mBluetoothClient.sendCommands(mSendSpeedCmd, mSendSteeringCmd);
+                    mBluetoothClient.send(mSendSpeedCmd, mSendSteeringCmd);
                 }
 
                 @Override
-                protected void onCommandsSent(int speedCmd, int steeringCmd) {
-                    Log.d(TAG, "onCommandsSent: " + String.format(Locale.getDefault(),
+                protected void onSent(int speedCmd, int steeringCmd) {
+                    Log.d(TAG, "onSent: " + String.format(Locale.getDefault(),
                             "[%d;%d]", speedCmd, steeringCmd));
                 }
 

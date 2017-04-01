@@ -1,64 +1,55 @@
 package com.gokhanettin.driverlessrccar.caroid;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.Locale;
-import java.util.UUID;
 
 /**
- * Created by gokhanettin on 26.03.2017.
+ * Created by gokhanettin on 01.04.2017.
  */
 
-class BluetoothClient {
-    private static final String TAG = "BluetoothClient";
-    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+public class TcpClient {
+    private static final String TAG = "TcpClient";
 
-    // Member fields
-    private final BluetoothAdapter mBluetoothAdapter;
-    private final Handler mHandler;
-    private BluetoothDevice mDevice;
-    private ConnectThread mConnectThread = null;
-    private ConnectedThread mConnectedThread = null;
-    private int mState;
-    private int mNewState;
-
-    // Message types sent from the BluetoothClient to activities
+    // Message types sent from the TcpClient to activities
     public static final int MESSAGE_CONNECTION_STATE_CHANGE = 0;
     public static final int MESSAGE_RECEIVE = 1;
-    public static final int MESSAGE_COMMUNICATION_MODE_CHANGE = 2;
-    public static final int MESSAGE_SEND = 3;
-    public static final int MESSAGE_CONNECTION_ESTABLISHED = 4;
-    public static final int MESSAGE_CONNECTION_ERROR = 5;
+    public static final int MESSAGE_SEND = 2;
+    public static final int MESSAGE_CONNECTION_ESTABLISHED = 3;
+    public static final int MESSAGE_CONNECTION_ERROR = 4;
 
     // Key names to identify some messages
-    public static final String DEVICE_NAME = "device_name";
-    public static final String CONNECTION_ERROR = "conn_error";
-    public static final String COMMUNICATION_MODE = "comm_mode";
-
-    // Communication modes
-    public static final String MODE_NONE = "N";
-    public static final String MODE_MONITOR = "M";
-    public static final String MODE_CONTROL = "C";
+    public static final String SERVER_ADDRESS = "server_address";
+    public static final String CONNECTION_ERROR = "tcp_conn_error";
 
     // Constants that indicate the current connection state
     public static final int STATE_NONE = 0;       // we're doing nothing
     public static final int STATE_CONNECTING = 1; // now initiating an outgoing connection
-    public static final int STATE_CONNECTED = 2;  // now connected to a remote device
+    public static final int STATE_CONNECTED = 2;  // now connected to the server
 
-    public BluetoothClient(Handler handler) {
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private ConnectThread mConnectThread = null;
+    private ConnectedThread mConnectedThread = null;
+
+    private Handler mHandler;
+    private int mState;
+    private int mNewState;
+
+    public TcpClient(Handler handler) {
+        mHandler = handler;
         mState = STATE_NONE;
         mNewState = mState;
-        mHandler = handler;
     }
 
     private synchronized void notifyStateChange() {
@@ -74,9 +65,8 @@ class BluetoothClient {
         return mState;
     }
 
-    public synchronized void connect(String address) {
-        mDevice = mBluetoothAdapter.getRemoteDevice(address);
-        Log.d(TAG, "Connecting to: " + mDevice);
+    public synchronized void connect(String ip, int port) {
+        Log.d(TAG, "Connecting to: " + ip + ":" + port);
 
         // Cancel any thread attempting to make a connection
         if (mConnectThread != null) {
@@ -91,7 +81,7 @@ class BluetoothClient {
         }
 
         // Start the thread to connect with the given device
-        mConnectThread = new ConnectThread();
+        mConnectThread = new ConnectThread(ip, port);
         mConnectThread.start();
         notifyStateChange();
     }
@@ -112,43 +102,39 @@ class BluetoothClient {
         notifyStateChange();
     }
 
-    public void requestCommunicationMode(String mode) {
-        requestCommunicationMode(mode, 0);
-    }
-
-    public void requestCommunicationMode(String mode, int delay) {
+    public void send(int speedCmd, int steeringCmd, float speed, float steering, CameraPreview cameraPreview) {
         // Create temporary object
         ConnectedThread t;
+
+        byte[] preview;
+        int width;
+        int height;
+
         // Synchronize a copy of the ConnectedThread
         synchronized (this) {
             if (mState != STATE_CONNECTED) return;
             t = mConnectedThread;
+            preview = cameraPreview.getPreview();
+            width = cameraPreview.getPreviewWidth();
+            height = cameraPreview.getPreviewHeight();
         }
-        // Request unsynchronized
-        t.requestCommunicationMode(mode, delay);
-    }
 
-    public void send(int speedCmd, int steeringCmd) {
-        send(speedCmd, steeringCmd, 0);
-    }
+        if(preview == null) return;
 
-    public void send(int speedCmd, int steeringCmd, int delay) {
         Output out = new Output();
         out.speedCommand = speedCmd;
         out.steeringCommand = steeringCmd;
-        // Create temporary object
-        ConnectedThread t;
-        // Synchronize a copy of the ConnectedThread
-        synchronized (this) {
-            if (mState != STATE_CONNECTED) return;
-            t = mConnectedThread;
-        }
-        // Send unsynchronized
-        t.send(out, delay);
+        out.speed = speed;
+        out.steering = steering;
+        out.jpeg = null;
+
+        // Process the preview and send unsynchronized
+        t.send(out, preview, width, height);
     }
 
-    private synchronized void connected(BluetoothSocket socket) {
-        Log.d(TAG, "Connected to " + mDevice);
+    private synchronized void connected(Socket socket) {
+        String serverAddress = socket.getInetAddress().toString();
+        Log.d(TAG, "Connected to " + serverAddress);
 
         // Cancel the thread that completed the connection
         if (mConnectThread != null) {
@@ -169,11 +155,12 @@ class BluetoothClient {
         // Send the name of the connected device back
         Message msg = mHandler.obtainMessage(MESSAGE_CONNECTION_ESTABLISHED);
         Bundle bundle = new Bundle();
-        bundle.putString(DEVICE_NAME, mDevice.getName());
+        bundle.putString(SERVER_ADDRESS, serverAddress);
         msg.setData(bundle);
         mHandler.sendMessage(msg);
         notifyStateChange();
     }
+
 
     private void connectionFailed() {
         // Send a failure message back to the Activity
@@ -188,7 +175,7 @@ class BluetoothClient {
     }
 
     private void connectionLost() {
-        // Send a failure message back to the Activity
+        // Send a conn lost message back to the Activity
         Message msg = mHandler.obtainMessage(MESSAGE_CONNECTION_ERROR);
         Bundle bundle = new Bundle();
         bundle.putString(CONNECTION_ERROR, "Device connection was lost");
@@ -202,49 +189,38 @@ class BluetoothClient {
     public class Input {
         public int speedCommand;
         public int steeringCommand;
-        public float speed;
-        public float steering;
     }
 
     public class Output {
         public int speedCommand;
         public int steeringCommand;
+        public float speed;
+        public float steering;
+        public byte[] jpeg;
     }
 
     private class ConnectThread extends Thread {
-        private final BluetoothSocket mmSocket;
+        String mmIP;
+        int mmPort;
+        Socket mmSocket;
 
-        ConnectThread() {
-            BluetoothSocket tmp = null;
-
-            // Get a BluetoothSocket for a connection with the
-            // given BluetoothDevice
-            try {
-
-                tmp = mDevice.createInsecureRfcommSocketToServiceRecord(MY_UUID);
-            } catch (IOException e) {
-                Log.e(TAG, "createInsecureRfcommSocketToServiceRecord() failed", e);
-            }
-            mmSocket = tmp;
-            mState = STATE_CONNECTING;
+        public ConnectThread(String ip, int port) {
+            mmIP = ip;
+            mmPort = port;
+            mmSocket = new Socket();
         }
 
+        @Override
         public void run() {
-            Log.i(TAG, "BEGIN mConnectThread");
-            setName("ConnectThread");
+            super.run();
 
-            // Always cancel discovery because it will slow down a connection
-            mBluetoothAdapter.cancelDiscovery();
-
-            // Make a connection to the BluetoothSocket
             try {
-                // This is a blocking call and will only return on a
-                // successful connection or an exception
-                mmSocket.connect();
+                mmSocket.connect(new InetSocketAddress(mmIP, mmPort), 10000);
             } catch (IOException e) {
-                connectionFailed();
                 // Close the socket
                 try {
+                    Log.e(TAG, "Failed to connect to " + mmIP + ":" + mmPort, e);
+                    connectionFailed();
                     mmSocket.close();
                 } catch (IOException e2) {
                     Log.e(TAG, "Unable to close() socket on connection failure", e2);
@@ -253,7 +229,7 @@ class BluetoothClient {
             }
 
             // Reset the ConnectThread because we're done
-            synchronized (BluetoothClient.this) {
+            synchronized (TcpClient.this) {
                 mConnectThread = null;
             }
 
@@ -265,20 +241,20 @@ class BluetoothClient {
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                Log.e(TAG, "close() failed at ConnectThread:cancel", e);
+                Log.e(TAG, "close() failed at ConnectThread.cancel()", e);
             }
         }
     }
 
     private class ConnectedThread extends Thread {
-        private final BluetoothSocket mmSocket;
+        private final Socket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
 
         private StringBuilder mmStringBuilder;
         private boolean mmValid;
 
-        ConnectedThread(BluetoothSocket socket) {
+        public ConnectedThread(Socket socket) {
             Log.d(TAG, "create ConnectedThread");
             mmSocket = socket;
             InputStream tmpIn = null;
@@ -299,7 +275,9 @@ class BluetoothClient {
             mmValid = false;
         }
 
+        @Override
         public void run() {
+            super.run();
             Log.i(TAG, "BEGIN mConnectedThread");
             setName("ConnectedThread");
             int c = 0;
@@ -308,7 +286,7 @@ class BluetoothClient {
                 try {
                     // Read from the InputStream
                     // "[<throttle_cmd>;<steering_cmd>]"
-                    while(mmInStream.available() > 0) {
+                    while (mmInStream.available() > 0) {
                         c = mmInStream.read();
                         if (c == '[') {
                             mmValid = true;
@@ -321,7 +299,7 @@ class BluetoothClient {
                                 mmValid = false;
                                 break;
                             } else {
-                                mmStringBuilder.append((char)c);
+                                mmStringBuilder.append((char) c);
                             }
                         }
                     }
@@ -333,69 +311,55 @@ class BluetoothClient {
             }
         }
 
-        void send(Output out, int delay) {
-            // "[<throttle_cmd>;<steering_cmd>]"
-            String string = String.format(Locale.US, "[%d;%d]",
-                    out.speedCommand, out.steeringCommand);
-            byte[] buffer = string.getBytes();
+        void send(Output out, byte[] preview, int width, int height) {
+            byte[] jpeg = preprocess(preview, width, height);
+            if (jpeg == null) return;
+
+            out.jpeg = jpeg;
+
+            byte[] header = String.format(Locale.US, "[%d;%d;%.3f;%.3f;%d]",
+                    out.speedCommand, out.steeringCommand, out.speed,
+                    out.steering, jpeg.length).getBytes();
             try {
-                mmOutStream.write(buffer);
+                mmOutStream.write(header);
+                mmOutStream.write(jpeg);
+                mmOutStream.flush();
                 mHandler.obtainMessage(MESSAGE_SEND, -1, -1, out).sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Exception on send()", e);
             }
-
-            if (delay > 0) {
-                try {
-                    Thread.sleep(delay);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
-        void requestCommunicationMode(String mode, int delay) {
-            // "[<mode>]"
-            byte[] buffer = ("[" + mode + "]").getBytes();
-            try {
-                mmOutStream.write(buffer);
-                Message msg = mHandler.obtainMessage(MESSAGE_COMMUNICATION_MODE_CHANGE);
-                Bundle bundle = new Bundle();
-                bundle.putString(COMMUNICATION_MODE, mode);
-                msg.setData(bundle);
-                mHandler.sendMessage(msg);
-            } catch (IOException e) {
-                Log.e(TAG, "Exception on requestCommunicationMode()", e);
+        private byte[] preprocess(byte[] preview, int width, int height) {
+            byte[] jpeg = null;
+            YuvImage image = new YuvImage(preview, ImageFormat.NV21, width, height, null);
+            Rect r = new Rect(0, 0, width, height);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            boolean ok = image.compressToJpeg(r, 100, baos);
+            if (ok) {
+                jpeg = baos.toByteArray();
             }
-
-            if (delay > 0) {
-                try {
-                    Thread.sleep(delay);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+            return jpeg;
         }
 
         void cancel() {
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                Log.e(TAG, "close() of connect socket failed", e);
+                Log.e(TAG, "close() of connect socket failed at ConnectedThread.cancel()", e);
             }
         }
 
         private void parse() {
-            // "<throttle_cmd>;<steering_cmd>;<velocity>;<steering>"
+            // "<throttle_cmd>;<steering_cmd>"
             String string = mmStringBuilder.toString();
             Log.d(TAG, "Parse string: " + string);
             String tokens[] = string.split(";");
-            Input in = new Input();
-            in.speedCommand = Integer.parseInt(tokens[0]);
-            in.steeringCommand = Integer.parseInt(tokens[1]);
-            in.speed = Float.parseFloat(tokens[2]);
-            in.steering = Float.parseFloat(tokens[3]);
-            mHandler.obtainMessage(MESSAGE_RECEIVE, -1, -1, in).sendToTarget();
+            int commands[] = new int[tokens.length];
+            for (int i = 0; i < commands.length; ++i) {
+                commands[i] = Integer.parseInt(tokens[i]);
+            }
+            mHandler.obtainMessage(MESSAGE_RECEIVE, -1, -1, commands).sendToTarget();
         }
     }
 }
