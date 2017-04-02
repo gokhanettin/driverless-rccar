@@ -1,3 +1,4 @@
+#include "Timer2.h"
 #include <Servo.h>
 
 // Communication modes MOnitor, COntrol, or NOne until requested.
@@ -172,9 +173,10 @@ void setup()
     valid = false;
 
 
+    Timer2.setup();
     deltaTime = 0UL;
     frameCounter = 0;
-    currentTime = micros();
+    currentTime =Timer2.micros();
     previousTime = currentTime;
 
     pulse = 0;
@@ -198,7 +200,7 @@ void setup()
 
 void loop()
 {
-    currentTime = micros();
+    currentTime = Timer2.micros();
     deltaTime = currentTime - previousTime;
 
     if (deltaTime >= 1000) {
@@ -247,7 +249,7 @@ void loop()
 // A1 - CH1 of my receiver - steering
 // A2 - Wheel encoder
 ISR(PCINT1_vect) {
-    interruptTime = micros();
+    interruptTime = Timer2.micros();
 
     // Throttle
     if ((lastLevel[SPEED_COMMAND] == LOW) && (PINC & B00000001)) {
