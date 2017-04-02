@@ -2,7 +2,6 @@ package com.gokhanettin.driverlessrccar.caroid;
 
 
 import android.content.Context;
-import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -26,10 +25,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     public CameraPreview(Context context, Camera camera) {
         super(context);
-
         mCamera = camera;
         mHolder = getHolder();
-        mHolder.addCallback(this);
+
         // deprecated setting, but required on Android versions prior to 3.0
         mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         Camera.Parameters params = mCamera.getParameters();
@@ -47,9 +45,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
         mPreviewSize = mCamera.getParameters().getPreviewSize();
         Log.d(TAG, "Preview size = " + mPreviewSize.width + ", " + mPreviewSize.height);
-
-        int format = mCamera.getParameters().getPreviewFormat();
-        int bytesPerPixel = ImageFormat.getBitsPerPixel(format) / 8;
     }
 
     @Override
@@ -100,6 +95,15 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     }
 
     public void setCamera(Camera camera) {
+        if (camera == null) {
+            mCamera.setPreviewCallback(null);
+            mHolder.removeCallback(this);
+        } else {
+            mHolder.addCallback(this);
+            Camera.Parameters params = camera.getParameters();
+            params.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+            camera.setParameters(params);
+        }
         mCamera = camera;
     }
 

@@ -33,9 +33,9 @@
 
 // Criticial steering commands measured from the receiver
 #define STEERING_COMMAND_TRIM    (68)
-#define STEERING_COMMAND_LEFT    (2000 + STEERING_COMMAND_TRIM)
+#define STEERING_COMMAND_RIGHT   (2000 + STEERING_COMMAND_TRIM)
 #define STEERING_COMMAND_NEUTRAL (1500 + STEERING_COMMAND_TRIM)
-#define STEERING_COMMAND_RIGHT   (1000 + STEERING_COMMAND_TRIM)
+#define STEERING_COMMAND_LEFT    (1000 + STEERING_COMMAND_TRIM)
 
 // These are sent to Android
 int speedCommand;

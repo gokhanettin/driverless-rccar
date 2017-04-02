@@ -1,20 +1,17 @@
 package com.gokhanettin.driverlessrccar.caroid;
 
-import android.content.Context;
 import android.hardware.Camera;
-import android.widget.Toast;
+import android.util.Log;
 
 /**
  * Created by gokhanettin on 01.04.2017.
  */
 
 public class CameraManager {
+    public static final String TAG = "CameraManager";
     private Camera mCamera;
-    private Context mContext;
 
-
-    public CameraManager(Context context) {
-        mContext = context;
+    public CameraManager() {
         // Create an instance of Camera
         mCamera = getCameraInstance();
     }
@@ -42,6 +39,7 @@ public class CameraManager {
         }
         catch (Exception e){
             // Camera is not available (in use or does not exist)
+            Log.e(TAG, "Failed to open camera", e);
         }
         return c; // returns null if camera is unavailable
     }

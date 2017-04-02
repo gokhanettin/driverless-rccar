@@ -26,7 +26,7 @@ public class ConnectionActivity extends AppCompatActivity {
     public static final String EXTRA_PORT = "extra_port";
 
     private static final int REQUEST_ENABLE_BT = 0;
-    private String mBluetoothAddress;
+    private String mBluetoothAddress = null;
     private BluetoothAdapter mBluetoothAdapter = null;
 
     @Override
@@ -68,6 +68,8 @@ public class ConnectionActivity extends AppCompatActivity {
     private void populatePairedDeviceList() {
         final ListView listViewPairedDevices =
                 (ListView) findViewById(R.id.list_view_paired_devices);
+        final TextView textViewBluetoothAddress =
+                (TextView) findViewById((R.id.text_view_bluetooth_addr));
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         ArrayList<String> list = new ArrayList<>();
         if (pairedDevices.size() > 0) {
@@ -79,16 +81,18 @@ public class ConnectionActivity extends AppCompatActivity {
             final ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                     android.R.layout.simple_list_item_1, list);
 
+            // Default device
             listViewPairedDevices.setAdapter(adapter);
             listViewPairedDevices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     String info = ((TextView) view).getText().toString();
                     mBluetoothAddress = info.substring(info.length() - 17);
+                    textViewBluetoothAddress.setText(mBluetoothAddress);
                 }
             });
         } else {
-            Toast.makeText(ConnectionActivity.this,
+            Toast.makeText(getApplicationContext(),
                     "No Paired Bluetooth Device Found.", Toast.LENGTH_LONG).show();
             finish();
         }
@@ -101,13 +105,23 @@ public class ConnectionActivity extends AppCompatActivity {
             EditText editTextPort = (EditText) findViewById(R.id.edit_text_port);
 
             String ip = editTextIp.getText().toString();
-            int port = Integer.parseInt(editTextPort.getText().toString());
+            int port = -1;
+            try {
+                port = Integer.parseInt(editTextPort.getText().toString());
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "Invalid port no", e);
+            }
 
-            Intent data = new Intent();
-            data.putExtra(EXTRA_BT_ADDRESS, mBluetoothAddress);
-            data.putExtra(EXTRA_IP, ip);
-            data.putExtra(EXTRA_PORT, port);
-            setResult(RESULT_OK, data);
+            if (mBluetoothAddress != null && !ip.isEmpty() && port != -1) {
+                Intent data = new Intent();
+                data.putExtra(EXTRA_BT_ADDRESS, mBluetoothAddress);
+                data.putExtra(EXTRA_IP, ip);
+                data.putExtra(EXTRA_PORT, port);
+                setResult(RESULT_OK, data);
+            } else {
+                Toast.makeText(getApplicationContext(), "Incomplete information",
+                        Toast.LENGTH_LONG).show();
+            }
             finish();
         }
     };

@@ -54,11 +54,13 @@ public class TcpClient {
 
     private synchronized void notifyStateChange() {
         mState = getState();
-        Log.d(TAG, "notifyStateChange() " + mNewState + " -> " + mState);
-        mNewState = mState;
+        if (mNewState != mState) {
+            Log.d(TAG, "notifyStateChange() " + mNewState + " -> " + mState);
+            mNewState = mState;
 
-        // Give the new state to the Handler so the Activity can update
-        mHandler.obtainMessage(MESSAGE_CONNECTION_STATE_CHANGE, mNewState, -1).sendToTarget();
+            // Give the new state to the Handler so the Activity can update
+            mHandler.obtainMessage(MESSAGE_CONNECTION_STATE_CHANGE, mNewState, -1).sendToTarget();
+        }
     }
 
     public synchronized int getState() {
@@ -87,6 +89,9 @@ public class TcpClient {
     }
 
     public synchronized void disconnect() {
+        mState = STATE_NONE;
+        notifyStateChange();
+
         // Cancel any thread attempting to make a connection
         if (mConnectThread != null) {
             mConnectThread.cancel();
@@ -98,17 +103,14 @@ public class TcpClient {
             mConnectedThread.cancel();
             mConnectedThread = null;
         }
-        mState = STATE_NONE;
-        notifyStateChange();
     }
 
     public void send(int speedCmd, int steeringCmd, float speed, float steering, CameraPreview cameraPreview) {
-        // Create temporary object
-        ConnectedThread t;
-
         byte[] preview;
         int width;
         int height;
+
+        ConnectedThread t;
 
         // Synchronize a copy of the ConnectedThread
         synchronized (this) {
@@ -166,7 +168,7 @@ public class TcpClient {
         // Send a failure message back to the Activity
         Message msg = mHandler.obtainMessage(MESSAGE_CONNECTION_ERROR);
         Bundle bundle = new Bundle();
-        bundle.putString(CONNECTION_ERROR, "Unable to connect device");
+        bundle.putString(CONNECTION_ERROR, "Unable to connect tcp server");
         msg.setData(bundle);
         mHandler.sendMessage(msg);
 
@@ -178,7 +180,7 @@ public class TcpClient {
         // Send a conn lost message back to the Activity
         Message msg = mHandler.obtainMessage(MESSAGE_CONNECTION_ERROR);
         Bundle bundle = new Bundle();
-        bundle.putString(CONNECTION_ERROR, "Device connection was lost");
+        bundle.putString(CONNECTION_ERROR, "Tcp connection was lost");
         msg.setData(bundle);
         mHandler.sendMessage(msg);
 
@@ -217,10 +219,10 @@ public class TcpClient {
             try {
                 mmSocket.connect(new InetSocketAddress(mmIP, mmPort), 10000);
             } catch (IOException e) {
+                Log.e(TAG, "Failed to connect to " + mmIP + ":" + mmPort, e);
+                connectionFailed();
                 // Close the socket
                 try {
-                    Log.e(TAG, "Failed to connect to " + mmIP + ":" + mmPort, e);
-                    connectionFailed();
                     mmSocket.close();
                 } catch (IOException e2) {
                     Log.e(TAG, "Unable to close() socket on connection failure", e2);
@@ -280,7 +282,7 @@ public class TcpClient {
             super.run();
             Log.i(TAG, "BEGIN mConnectedThread");
             setName("ConnectedThread");
-            int c = 0;
+            int c;
             // Keep listening to the InputStream while connected
             while (mState == STATE_CONNECTED) {
                 try {
@@ -304,7 +306,7 @@ public class TcpClient {
                         }
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "Disconnected", e);
+                    Log.e(TAG, "Connection lost to the tcp server", e);
                     connectionLost();
                     break;
                 }
@@ -327,6 +329,7 @@ public class TcpClient {
                 mHandler.obtainMessage(MESSAGE_SEND, -1, -1, out).sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Exception on send()", e);
+                connectionLost();
             }
         }
 
@@ -343,6 +346,12 @@ public class TcpClient {
         }
 
         void cancel() {
+            try {
+                mmOutStream.write("$".getBytes());
+                mmOutStream.flush();
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to send communication end indication", e);
+            }
             try {
                 mmSocket.close();
             } catch (IOException e) {

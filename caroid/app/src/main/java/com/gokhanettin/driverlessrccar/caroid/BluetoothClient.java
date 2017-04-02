@@ -63,11 +63,13 @@ class BluetoothClient {
 
     private synchronized void notifyStateChange() {
         mState = getState();
-        Log.d(TAG, "notifyStateChange() " + mNewState + " -> " + mState);
-        mNewState = mState;
+        if (mNewState != mState) {
+            Log.d(TAG, "notifyStateChange() " + mNewState + " -> " + mState);
+            mNewState = mState;
 
-        // Give the new state to the Handler so the Activity can update
-        mHandler.obtainMessage(MESSAGE_CONNECTION_STATE_CHANGE, mNewState, -1).sendToTarget();
+            // Give the new state to the Handler so the Activity can update
+            mHandler.obtainMessage(MESSAGE_CONNECTION_STATE_CHANGE, mNewState, -1).sendToTarget();
+        }
     }
 
     public synchronized int getState() {
@@ -97,6 +99,9 @@ class BluetoothClient {
     }
 
     public synchronized void disconnect() {
+        mState = STATE_NONE;
+        notifyStateChange();
+
         // Cancel any thread attempting to make a connection
         if (mConnectThread != null) {
             mConnectThread.cancel();
@@ -108,8 +113,6 @@ class BluetoothClient {
             mConnectedThread.cancel();
             mConnectedThread = null;
         }
-        mState = STATE_NONE;
-        notifyStateChange();
     }
 
     public void requestCommunicationMode(String mode) {
@@ -136,8 +139,9 @@ class BluetoothClient {
         Output out = new Output();
         out.speedCommand = speedCmd;
         out.steeringCommand = steeringCmd;
-        // Create temporary object
+
         ConnectedThread t;
+
         // Synchronize a copy of the ConnectedThread
         synchronized (this) {
             if (mState != STATE_CONNECTED) return;
@@ -179,7 +183,7 @@ class BluetoothClient {
         // Send a failure message back to the Activity
         Message msg = mHandler.obtainMessage(MESSAGE_CONNECTION_ERROR);
         Bundle bundle = new Bundle();
-        bundle.putString(CONNECTION_ERROR, "Unable to connect device");
+        bundle.putString(CONNECTION_ERROR, "Unable to connect to bluetooth device");
         msg.setData(bundle);
         mHandler.sendMessage(msg);
 
@@ -191,7 +195,7 @@ class BluetoothClient {
         // Send a failure message back to the Activity
         Message msg = mHandler.obtainMessage(MESSAGE_CONNECTION_ERROR);
         Bundle bundle = new Bundle();
-        bundle.putString(CONNECTION_ERROR, "Device connection was lost");
+        bundle.putString(CONNECTION_ERROR, "Bluetooth device connection lost");
         msg.setData(bundle);
         mHandler.sendMessage(msg);
 
@@ -326,7 +330,7 @@ class BluetoothClient {
                         }
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "Disconnected", e);
+                    Log.e(TAG, "Connection lost to bluetooth device", e);
                     connectionLost();
                     break;
                 }
@@ -343,6 +347,7 @@ class BluetoothClient {
                 mHandler.obtainMessage(MESSAGE_SEND, -1, -1, out).sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Exception on send()", e);
+                connectionLost();
             }
 
             if (delay > 0) {

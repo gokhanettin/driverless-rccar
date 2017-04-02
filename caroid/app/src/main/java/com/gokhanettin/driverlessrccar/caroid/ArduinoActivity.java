@@ -67,17 +67,16 @@ public class ArduinoActivity extends AppCompatActivity {
         mSeekBarSteeringCmd.setMax((STEERING_CMD_MAX - STEERING_CMD_MIN)/STEERING_CMD_STEP);
         mSeekBarSpeedCmd.setOnSeekBarChangeListener(mSpeedCmdChangeListener);
         mSeekBarSteeringCmd.setOnSeekBarChangeListener(mSteeringCmdChangeListener);
-
+        mBluetoothClient = new BluetoothClient(mHandler);
         Intent intent = new Intent(ArduinoActivity.this, DeviceListActivity.class);
         Log.d(TAG, "Asking for BT device address");
         startActivityForResult(intent, REQUEST_BT_ADDRESS);
-
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (mBluetoothClient != null) {
+    public void onStop() {
+        super.onStop();
+        if (mBluetoothClient.getState() != BluetoothClient.STATE_NONE) {
             mBluetoothClient.disconnect();
         }
     }
@@ -88,9 +87,7 @@ public class ArduinoActivity extends AppCompatActivity {
         if (requestCode == REQUEST_BT_ADDRESS) {
             if (resultCode == RESULT_OK) {
                 String address = data.getStringExtra(DeviceListActivity.EXTRA_BT_ADDRESS);
-                Log.d(TAG, "Device address received: " + address);
-                mBluetoothClient = new BluetoothClient(mHandler);
-                Log.d(TAG, "Connecting...");
+                Log.d(TAG, "Connecting to " + address);
                 mBluetoothClient.connect(address);
             } else {
                 finish();
@@ -181,14 +178,14 @@ public class ArduinoActivity extends AppCompatActivity {
                 @Override
                 protected void onReceived(int speedCmd, int steeringCmd,
                                           float speed, float steering) {
-                    Locale locale = Locale.getDefault();
+                    Locale locale = Locale.US;
                     Log.d(TAG, "onReceived: " + String.format(locale,
-                            "[%d;%d;%.2f;%.2f]", speedCmd, steeringCmd, speed, steering));
+                            "[%d;%d;%.3f;%.3f]", speedCmd, steeringCmd, speed, steering));
 
                     mTextViewSpeedCmd.setText(String.format(locale, "%d", speedCmd));
                     mTextViewSteeringCmd.setText(String.format(locale, "%d", steeringCmd));
-                    mTextViewSpeed.setText(String.format(locale, "%.2f m/s", speed));
-                    mTextViewSteering.setText(String.format(locale, "%.2f°", steering));
+                    mTextViewSpeed.setText(String.format(locale, "%.3f m/s", speed));
+                    mTextViewSteering.setText(String.format(locale, "%.3f°", steering));
                     mReceiveSpeedCmd = speedCmd;
                     mReceiveSteeringCmd = steeringCmd;
 
@@ -198,7 +195,7 @@ public class ArduinoActivity extends AppCompatActivity {
 
                 @Override
                 protected void onSent(int speedCmd, int steeringCmd) {
-                    Log.d(TAG, "onSent: " + String.format(Locale.getDefault(),
+                    Log.d(TAG, "onSent: " + String.format(Locale.US,
                             "[%d;%d]", speedCmd, steeringCmd));
                 }
 
@@ -222,7 +219,7 @@ public class ArduinoActivity extends AppCompatActivity {
                 @Override
                 protected void onConnectionError(String error) {
                     Log.d(TAG, "OnConnectionError: " + error);
-                    Toast.makeText(getApplicationContext(), error, Toast.LENGTH_LONG).show();
+                    Toast.makeText(ArduinoActivity.this, error, Toast.LENGTH_LONG).show();
                 }
             };
 

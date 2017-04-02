@@ -11,42 +11,68 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 public class CameraActivity extends AppCompatActivity {
     private static final String TAG = "CameraActivity";
     private CameraPreview mCameraPreview;
     private CameraManager mCameraManager;
-    private TcpClient mTcpClient = null;
-    private String mIP;
+    private TcpClient mTcpClient;
+    private AlertDialog mServerDialog;
+    private String mIP = null;
     private int mPort;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        mCameraManager = new CameraManager(this);
+        mCameraManager = new CameraManager();
         // Create our Preview view and set it as the content of our activity.
         mCameraPreview = new CameraPreview(this, mCameraManager.getCamera());
         FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
         preview.addView(mCameraPreview);
-        askForServerAddress();
+        mTcpClient = new TcpClient(mHandler);
+        createServerDialog();
+        Log.d(TAG, "Asking for server address");
+        mServerDialog.show();
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (mTcpClient != null) {
-            mTcpClient.disconnect();
+    public void onResume() {
+        Log.d(TAG, "onResume");
+        super.onResume();
+        mCameraPreview.setCamera(mCameraManager.getCamera());
+        int state = mTcpClient.getState();
+        if (state == TcpClient.STATE_CONNECTED) {
+            mTimer.start();
         }
+    }
+
+    @Override
+    public void onPause() {
+        Log.d(TAG, "onPause");
+        super.onPause();
+        mTimer.cancel();
+        mCameraPreview.setCamera(null);
         mCameraManager.releaseCamera();
     }
 
-    private void askForServerAddress() {
+    @Override
+    public void onStop() {
+        Log.d(TAG, "onStop");
+        super.onStop();
+        if (mTcpClient.getState() != TcpClient.STATE_NONE) {
+            mTcpClient.disconnect();
+        }
+        mServerDialog.dismiss();
+    }
+
+    private void createServerDialog() {
         LayoutInflater infilater = this.getLayoutInflater();
         final View textEntryView = infilater.inflate(R.layout.server_address, null);
-        Log.d(TAG, "Asking for server address");
-        AlertDialog dialog =  new AlertDialog.Builder(this)
+        mServerDialog  =  new AlertDialog.Builder(this)
                 .setIconAttribute(android.R.attr.alertDialogIcon)
                 .setTitle("Server Address")
                 .setView(textEntryView)
@@ -55,11 +81,8 @@ public class CameraActivity extends AppCompatActivity {
 
                         EditText ipEdit = (EditText)textEntryView.findViewById(R.id.ip_edit);
                         EditText portEdit = (EditText)textEntryView.findViewById(R.id.port_edit);
-                         //mIP = ipEdit.getText().toString();
-                         //mPort = Integer.parseInt(portEdit.getText().toString());
-                        mIP = "192.168.0.67";
-                        mPort = 5000;
-                        mTcpClient = new TcpClient(mHandler);
+                        mIP = ipEdit.getText().toString();
+                        mPort = Integer.parseInt(portEdit.getText().toString());
                         mTcpClient.connect(mIP, mPort);
                     }
                 })
@@ -69,7 +92,6 @@ public class CameraActivity extends AppCompatActivity {
                     }
                 })
                 .create();
-        dialog.show();
     }
 
     private final Handler.Callback mHandlerCallback = new TcpHandlerCallback() {
@@ -98,31 +120,35 @@ public class CameraActivity extends AppCompatActivity {
         @Override
         protected void onSent(int speedCmd, int steeringCmd,
                               float speed, float steering, byte[] frame) {
-            Log.d(TAG, "onSent() size: " + frame.length);
+
         }
 
         @Override
         protected void onConnectionEstablished(String serverAddress) {
-            new CountDownTimer(120001, 50) {
-
-                public void onTick(long millisUntilFinished) {
-                    mTcpClient.send(1500, 1500, 1.0f, 2.1f, mCameraPreview);
-                    Log.d(TAG, "onTick()");
-                }
-
-                public void onFinish() {
-                    Log.d(TAG, "Timer onFinish()");
-                    cancel();
-                    finish();
-                }
-            }.start();
+            mTimer.start();
         }
 
         @Override
         protected void onConnectionError(String error) {
-
+            Log.d(TAG, "OnConnectionError: " + error);
+            Toast.makeText(getApplication(), error, Toast.LENGTH_LONG).show();
+            mTimer.cancel();
         }
     };
 
     private final Handler mHandler = new Handler(mHandlerCallback);
+
+    private CountDownTimer mTimer = new CountDownTimer(10001, 50) {
+        @Override
+        public void onTick(long millisUntilFinished) {
+            if (mTcpClient.getState() == TcpClient.STATE_CONNECTED) {
+                mTcpClient.send(1500, 1500, 0.000f, 0.000f, mCameraPreview);
+            }
+        }
+
+        @Override
+        public void onFinish() {
+            start();
+        }
+    };
 }

@@ -21,21 +21,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ArduinoActivity"
+        <activity android:name=".ArduinoActivity"
             android:parentActivityName=".MainActivity" />
-        <activity
-            android:name=".DeviceListActivity"
+
+        <activity android:name=".DeviceListActivity"
             android:parentActivityName=".MainActivity" />
-        <activity
-            android:name=".CameraActivity"
+
+        <activity android:name=".CameraActivity"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="landscape" />
-        <activity
-            android:name=".ConnectionActivity"
+
+        <activity android:name=".ConnectionActivity"
             android:parentActivityName=".MainActivity" />
-        <activity
-            android:name=".AcquisitionActivity"
+
+        <activity android:name=".AcquisitionActivity"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="landscape" />
     </application>

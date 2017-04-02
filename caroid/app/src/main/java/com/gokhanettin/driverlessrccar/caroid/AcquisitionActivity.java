@@ -14,33 +14,59 @@ public class AcquisitionActivity extends AppCompatActivity {
     private static final String TAG = "AcquisitionActivity";
     private static final int REQUEST_CONNECTION = 0;
 
-    private BluetoothClient mBluetoothClient = null;
-    private TcpClient mTcpClient = null;
+    private BluetoothClient mBluetoothClient;
+    private TcpClient mTcpClient;
     private CameraPreview mCameraPreview;
     private CameraManager mCameraManager;
-    private FrameLayout mPreviewLayout;
+    private boolean mIsTcpSendOk = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_acquisition);
 
-        mCameraManager = new CameraManager(this);
+        mCameraManager = new CameraManager();
         // Create our Preview view and set it as the content of our activity.
         mCameraPreview = new CameraPreview(this, mCameraManager.getCamera());
-        mPreviewLayout = (FrameLayout) findViewById(R.id.acquisition_preview);
+        final FrameLayout previewLayout = (FrameLayout) findViewById(R.id.acquisition_preview);
+        previewLayout.addView(mCameraPreview);
+        mBluetoothClient = new BluetoothClient(mBluetoothHandler);
+        mTcpClient = new TcpClient(mTcpHandler);
         Intent intent = new Intent(AcquisitionActivity.this, ConnectionActivity.class);
         Log.d(TAG, "Requesting bluetooth and network connections");
         startActivityForResult(intent, REQUEST_CONNECTION);
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (mBluetoothClient != null) {
+    public void onResume() {
+        Log.d(TAG, "onResume");
+        super.onResume();
+        mCameraPreview.setCamera(mCameraManager.getCamera());
+        int btState = mBluetoothClient.getState();
+        int tcpState = mTcpClient.getState();
+        if (btState == BluetoothClient.STATE_CONNECTED
+                || tcpState == TcpClient.STATE_CONNECTED) {
+            mIsTcpSendOk = true;
+        }
+    }
+
+    @Override
+    public void onPause() {
+        Log.d(TAG, "onPause");
+        super.onPause();
+        mIsTcpSendOk = false;
+        mCameraPreview.setCamera(null);
+        mCameraManager.releaseCamera();
+    }
+
+    @Override
+    public void onStop() {
+        Log.d(TAG, "onStop");
+        super.onStop();
+        if (mBluetoothClient.getState() != BluetoothClient.STATE_NONE) {
             mBluetoothClient.disconnect();
         }
-        if (mTcpClient != null) {
+        if (mTcpClient.getState() != TcpClient.STATE_NONE) {
             mTcpClient.disconnect();
         }
     }
@@ -53,12 +79,14 @@ public class AcquisitionActivity extends AppCompatActivity {
                 String btAddress = data.getStringExtra(ConnectionActivity.EXTRA_BT_ADDRESS);
                 String ip = data.getStringExtra(ConnectionActivity.EXTRA_IP);
                 int port = data.getIntExtra(ConnectionActivity.EXTRA_PORT, 5555);
-                Log.d(TAG, "Connecting to bluetooth  device at " + btAddress);
-                mBluetoothClient = new BluetoothClient(mBluetoothHandler);
-                mBluetoothClient.connect(btAddress);
-                Log.d(TAG, "Connecting to server at " + ip + ":" + port);
-                mTcpClient = new TcpClient(mTcpHandler);
-                mTcpClient.connect(ip, port);
+                if (mBluetoothClient.getState() == BluetoothClient.STATE_NONE) {
+                    Log.d(TAG, "Connecting to bluetooth  device at " + btAddress);
+                    mBluetoothClient.connect(btAddress);
+                }
+                if (mTcpClient.getState() == TcpClient.STATE_NONE) {
+                    Log.d(TAG, "Connecting to server at " + ip + ":" + port);
+                    mTcpClient.connect(ip, port);
+                }
             } else {
                 finish();
             }
@@ -90,11 +118,14 @@ public class AcquisitionActivity extends AppCompatActivity {
             Locale locale = Locale.US;
             Log.d(TAG, "(Bluetooth) onReceived: " + String.format(locale,
                     "[%d;%d;%.3f;%.3f]", speedCmd, steeringCmd, speed, steering));
-            mTcpClient.send(speedCmd, steeringCmd, speed, steering, mCameraPreview);
+            if (mIsTcpSendOk) {
+                mTcpClient.send(speedCmd, steeringCmd, speed, steering, mCameraPreview);
+            }
         }
 
         @Override
         protected void onSent(int speedCmd, int steeringCmd) {
+
         }
 
         @Override
@@ -147,12 +178,13 @@ public class AcquisitionActivity extends AppCompatActivity {
 
         @Override
         protected void onConnectionEstablished(String serverAddress) {
-            mPreviewLayout.addView(mCameraPreview);
+            mIsTcpSendOk = true;
         }
 
         @Override
         protected void onConnectionError(String error) {
-
+            Toast.makeText(getApplicationContext(), error, Toast.LENGTH_LONG).show();
+            mIsTcpSendOk = false;
         }
     };
 
