@@ -20,6 +20,10 @@ public class CameraManager {
     }
 
     public Camera getCamera() {
+        if (mCamera != null) {
+            return mCamera;
+        }
+        mCamera = getCameraInstance();
         return mCamera;
     }
 

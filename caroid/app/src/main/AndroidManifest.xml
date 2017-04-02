@@ -33,11 +33,11 @@
             android:screenOrientation="landscape" />
         <activity
             android:name=".ConnectionActivity"
-            android:parentActivityName=".MainActivity"/>
+            android:parentActivityName=".MainActivity" />
         <activity
             android:name=".AcquisitionActivity"
             android:parentActivityName=".MainActivity"
-            android:screenOrientation="landscape"/>
+            android:screenOrientation="landscape" />
     </application>
 
 </manifest>

@@ -30,7 +30,7 @@ public class AcquisitionActivity extends AppCompatActivity {
         mCameraPreview = new CameraPreview(this, mCameraManager.getCamera());
         mPreviewLayout = (FrameLayout) findViewById(R.id.acquisition_preview);
         Intent intent = new Intent(AcquisitionActivity.this, ConnectionActivity.class);
-        Log.d(TAG, "Asking for BT device address");
+        Log.d(TAG, "Requesting bluetooth and network connections");
         startActivityForResult(intent, REQUEST_CONNECTION);
     }
 
