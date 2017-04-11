@@ -1,10 +1,12 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import socket
 import sys
 import os
 import datetime
+import cv2
+import numpy as np
 
 
 HOST = "0.0.0.0"
@@ -47,18 +49,18 @@ def main():
             while True:
                 index += 1
                 image_id += 1
-                buff = ''
+                buff = b''
                 while True:
                     c = conn.recv(1)
-                    if c == '$':
+                    if c == b'$':
                         print("Client asked to disconnect")
                         conn.close()
                         datasetfile.close()
                         has_connection = False
                         break
-                    elif c == '[':
+                    elif c == b'[':
                         continue
-                    elif c == ']':
+                    elif c == b']':
                         break
                     else:
                         buff += c
@@ -66,7 +68,8 @@ def main():
                 if not has_connection:
                     break
 
-                header = buff.split(';')
+                decoded_buff = buff.decode()
+                header = decoded_buff.split(';')
                 speed_cmd = int(header[0])
                 steering_cmd = int(header[1])
                 speed = float(header[2])
@@ -82,6 +85,13 @@ def main():
 
                 with open(IMAGEFILEFULL.format(image_id), 'wb') as f:
                     f.write(img)
+
+                np_arr = np.frombuffer(img, dtype=np.uint8)
+                frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+                cv2.imshow('video', frame)
+
+                if (cv2.waitKey(1) & 0xFF) == ord('q'):  # Hit `q` to exit
+                    break
 
                 timestamp = "{:%Y%m%d%H%M%S}".format(datetime.datetime.now())
                 datasetfile.write(DATASETFILEROW.format(index=index, timestamp=timestamp,
