@@ -138,11 +138,12 @@ public class CameraActivity extends AppCompatActivity {
 
     private final Handler mHandler = new Handler(mHandlerCallback);
 
+    // 20 Hz
     private CountDownTimer mTimer = new CountDownTimer(10001, 50) {
         @Override
         public void onTick(long millisUntilFinished) {
             if (mTcpClient.getState() == TcpClient.STATE_CONNECTED) {
-                mTcpClient.send(1500, 1500, 0.000f, 0.000f, mCameraPreview);
+                mTcpClient.send(1400, 1568, 0.000f, 0.000f, mCameraPreview);
             }
         }
 

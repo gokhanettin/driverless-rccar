@@ -19,11 +19,11 @@ public class ArduinoActivity extends AppCompatActivity {
     public static final String TAG = "ArduinoActivity";
     private static final int REQUEST_BT_ADDRESS = 0;
 
-    private static final int SPEED_CMD_MIN = 1000;
-    private static final int SPEED_CMD_MAX = 2000;
+    private static final int SPEED_CMD_MIN = (1400 - 250);
+    private static final int SPEED_CMD_MAX = (1400 + 250);
     private static final int SPEED_CMD_STEP = 10;
-    private static final int STEERING_CMD_MIN = 1000;
-    private static final int STEERING_CMD_MAX = 2000;
+    private static final int STEERING_CMD_MIN = (1568 - 530);
+    private static final int STEERING_CMD_MAX = (1568 + 530);
     private static final int STEERING_CMD_STEP = 10;
 
     private BluetoothClient mBluetoothClient = null;
