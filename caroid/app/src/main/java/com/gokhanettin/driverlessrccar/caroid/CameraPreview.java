@@ -20,8 +20,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private SurfaceHolder mHolder;
     private Camera mCamera;
     private Camera.Size mPreviewSize;
+    private int mMaxFps;
     private final LinkedList<byte[]> mQueue = new LinkedList<>();
-    private static final int MAX_QUEUE_SIZE = 15;
+    private static final int MAX_QUEUE_SIZE = 2;
 
     public CameraPreview(Context context, Camera camera) {
         super(context);
@@ -34,17 +35,33 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         List<Camera.Size> sizes = params.getSupportedPreviewSizes();
         Camera.Size smallest = sizes.get(0);
         for (Camera.Size s : sizes) {
-            Log.d(TAG, "Supported preview size = " + s.width + ", " + s.height);
+            Log.d(TAG, "Supported preview size " + s.width + ", " + s.height);
             if (smallest.width > s.width) {
                 smallest = s;
             }
         }
 
+        List<int[]> fpsRanges = params.getSupportedPreviewFpsRange();
+        mMaxFps = fpsRanges.get(0)[Camera.Parameters.PREVIEW_FPS_MAX_INDEX];
+        for (int[] fpsRange : fpsRanges) {
+            int mx = fpsRange[Camera.Parameters.PREVIEW_FPS_MAX_INDEX];
+            int mn = fpsRange[Camera.Parameters.PREVIEW_FPS_MIN_INDEX];
+            Log.d(TAG, "Supported fps range " + mx + ", " + mn);
+            if (mMaxFps < mx) {
+                mMaxFps = mx;
+            }
+        }
         params.setPreviewSize(smallest.width, smallest.height); // Smaller is better
+        params.setPreviewFpsRange(mMaxFps, mMaxFps);
         mCamera.setParameters(params);
 
         mPreviewSize = mCamera.getParameters().getPreviewSize();
-        Log.d(TAG, "Preview size = " + mPreviewSize.width + ", " + mPreviewSize.height);
+        Log.d(TAG, "Preview size is set to " + mPreviewSize.width + ", " + mPreviewSize.height);
+
+        int[] fpsRange = new int[2];
+        mCamera.getParameters().getPreviewFpsRange(fpsRange);
+        Log.d(TAG, "Fps Range is set to " + fpsRange[Camera.Parameters.PREVIEW_FPS_MAX_INDEX] +
+                ", " + fpsRange[Camera.Parameters.PREVIEW_FPS_MIN_INDEX]);
     }
 
     @Override
@@ -102,6 +119,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             mHolder.addCallback(this);
             Camera.Parameters params = camera.getParameters();
             params.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+            params.setPreviewFpsRange(mMaxFps, mMaxFps);
             camera.setParameters(params);
         }
         mCamera = camera;
@@ -123,6 +141,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     public int getPreviewHeight() {
         return mPreviewSize.height;
+    }
+
+    public int getPreviewFps() {
+        return mMaxFps;
     }
 
     private void clearQueue() {

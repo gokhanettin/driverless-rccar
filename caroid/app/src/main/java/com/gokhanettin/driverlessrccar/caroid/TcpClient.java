@@ -121,7 +121,9 @@ public class TcpClient {
             height = cameraPreview.getPreviewHeight();
         }
 
-        if(preview == null) return;
+        if(preview == null) {
+            return;
+        }
 
         Output out = new Output();
         out.speedCommand = speedCmd;
