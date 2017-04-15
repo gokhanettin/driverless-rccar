@@ -36,7 +36,7 @@ From a spec-file one can create an idential environment.
 
 ```
 # Create the idential environment from spec-file.txt
-conda create -n environment --name <env-name> --file spec-file.txt
+conda create --name <env-name> --file spec-file.txt
 ```
 
 If you don't want to create your environment from the spec-file.txt, you might
