@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
 import socket
 import sys
 import os
@@ -24,7 +25,7 @@ IMAGEFILE = "im{:08d}.jpeg"
 
 DATASETFILEFULL = DATASETDIR + "/" + DATASETFILE
 IMAGEFILEFULL = IMAGEDIR + "/" + IMAGEFILE
-DATASETFILEROW = "{index};{timestamp};{imagefile};{steering_cmd};{speed_cmd};{steering:.3f};{speed:.3f}\n"
+DATASETFILEROW = "{timestep};{timestamp};{imagefile};{steering_cmd};{speed_cmd};{steering:.3f};{speed:.3f}\n"
 
 
 def main():
@@ -41,13 +42,13 @@ def main():
         print("Waiting for a new connection")
         conn, addr = mySocket.accept()
         datasetfile = open(DATASETFILEFULL, 'a')
-        index = 0
+        timestep = 0
 
         has_connection = True
         try:
             print("Connection from: " + str(addr))
             while True:
-                index += 1
+                timestep += 1
                 image_id += 1
                 buff = b''
                 while True:
@@ -76,7 +77,7 @@ def main():
                 steering = float(header[3])
                 size = int(header[4])
 
-                print(index, speed_cmd, steering_cmd, speed, steering, size)
+                print(timestep, speed_cmd, steering_cmd, speed, steering, size)
                 img = bytearray()
                 while size > 0:
                     chunk = conn.recv(size)
@@ -88,15 +89,17 @@ def main():
 
                 np_arr = np.frombuffer(img, dtype=np.uint8)
                 frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-                cv2.imshow('video', frame)
+                cv2.imshow('acquisition', frame)
 
                 if (cv2.waitKey(1) & 0xFF) == ord('q'):  # Hit `q` to exit
                     break
 
                 timestamp = "{:%Y%m%d%H%M%S}".format(datetime.datetime.now())
-                datasetfile.write(DATASETFILEROW.format(index=index, timestamp=timestamp,
-                    speed_cmd=speed_cmd, steering_cmd=steering_cmd, speed=speed,
-                    steering=steering, imagefile=IMAGEFILE.format(image_id)))
+                datasetfile.write(DATASETFILEROW.format(
+                    timestep=timestep, timestamp=timestamp,
+                    speed_cmd=speed_cmd, steering_cmd=steering_cmd,
+                    speed=speed, steering=steering,
+                    imagefile=IMAGEFILE.format(image_id)))
                 if image_id % 20:
                     datasetfile.flush()
 
