@@ -111,20 +111,7 @@ def do_training():
     csv_writer.writerow(("epoch", "validation", "training"))
     csv_file.flush()
 
-    # mean = [utils.STEERING_COMMAND_NEUTRAL,
-    #         utils.SPEED_COMMAND_NEUTRAL]
-    # stddev = [utils.STEERING_COMMAND_HALF_RANGE,
-    #           utils.SPEED_COMMAND_HALF_RANGE]
-
-    mean = training_mean
-    stddev = training_stddev
-
-    print("Using Mean: {}".format(mean))
-    print("Using Standard Deviation: {}".format(stddev))
-
-
-    model = Model(mean, stddev, args)
-
+    model = Model(training_mean, training_stddev, args)
     saver = tf.train.Saver()
     init = tf.global_variables_initializer()
     ckpt = tf.train.latest_checkpoint(args.checkpoint_dir)

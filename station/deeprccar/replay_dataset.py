@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import numpy as np
+
 import cv2
 
 import dataset as ds
@@ -12,12 +12,13 @@ from collections import deque
 
 parser = argparse.ArgumentParser()
 parser.add_argument("dataset_dir")
-
 args = parser.parse_args()
-dataset_path = args.dataset_dir + "/" + ds.DATASET_FILE
+
+dataset_file = args.dataset_dir + "/" + ds.DATASET_FILE
 image_dir = args.dataset_dir + "/" + ds.IMAGE_FOLDER + "/"
-with open(dataset_path, 'r') as csv:
+with open(dataset_file, 'r') as csv:
     for line in csv.readlines():
+        line = line.strip()
         (_, _, imagefile, steering_cmd, speed_cmd, _, _) = line.split(";")
         steering_cmd = int(steering_cmd)
         speed_cmd = int(speed_cmd)
