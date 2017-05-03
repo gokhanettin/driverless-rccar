@@ -68,7 +68,7 @@ steering and speed commands given the input images.
 
 You can see the results in the following video.
 
-[![Steering Control with Deep Learning](https://img.youtube.com/vi/3KMKOiGDl7Q/0.jpg)](https://youtu.be/3KMKOiGDl7Q)
+[![Steering Control with Deep Learning](https://img.youtube.com/vi/Z6VKdoF2ZXY/0.jpg)](https://youtu.be/Z6VKdoF2ZXY)
 
 ## Directory Structure
 

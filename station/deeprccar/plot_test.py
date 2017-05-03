@@ -35,7 +35,7 @@ if  args.y_axis == "steering":
     ax.plot(data["timestep"], data["steering_expected"], label='Expected',
             color='g')
     ax.legend()
-    ax.set_xlabel("Time")
+    ax.set_xlabel("Timestep")
     ax.set_ylabel("Steering Command")
     print("RMSE: ", np.sqrt(np.mean(np.square(data["steering_predicted"] -
                                               data["steering_expected"]))))
@@ -45,7 +45,7 @@ else:
     ax.plot(data["timestep"], data["speed_expected"], label='Expected',
             color='g')
     ax.legend()
-    ax.set_xlabel("Time")
+    ax.set_xlabel("Timestep")
     ax.set_ylabel("Speed Command")
     print("RMSE: ", np.sqrt(np.mean(np.square(data["speed_predicted"] -
                                               data["speed_expected"]))))
