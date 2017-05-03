@@ -53,6 +53,7 @@ with open(args.csv_file, 'r') as csv:
         speed_expected = int(speed_expected)
 
         image = cv2.imread(image_file, cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         image = cv2.resize(image, (480, 320), interpolation=cv2.INTER_CUBIC)
 
         # Count images

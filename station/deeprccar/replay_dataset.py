@@ -24,6 +24,7 @@ with open(dataset_file, 'r') as csv:
         speed_cmd = int(speed_cmd)
 
         image = cv2.imread(image_dir + imagefile, cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         image = cv2.resize(image, (480, 320), interpolation=cv2.INTER_CUBIC)
         # Count images
         cv2.putText(image, imagefile, (5, 35),

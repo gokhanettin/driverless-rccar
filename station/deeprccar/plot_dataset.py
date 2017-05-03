@@ -39,7 +39,7 @@ print("{}: (mean, std) = ({}, {})".format(args.y_axis,
                                           np.std(data[args.y_axis])))
 fig, ax = plt.subplots()
 x_axis = range(len(data["timestep"]))
-ax.plot(x_axis, data[args.y_axis])
+ax.plot(x_axis, data[args.y_axis], color='g')
 ax.set_xlabel("Timestep")
 ax.set_ylabel(labels[args.y_axis])
 plt.show()
