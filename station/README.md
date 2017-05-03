@@ -101,15 +101,48 @@ pip install --ignore-installed --upgrade $TF_PYTHON_URL
 
 #### GPU-enabled TensorFlow Installation
 
-Following instructions help you install GPU-enabled TensorFlow.Please first see
-[NVIDIA requirements to run TensorFlow with GPU support][tf_install].
+Following instructions help you install GPU-enabled TensorFlow.
+
+Install kernel headers.
+
+```
+sudo apt-get install linux-headers-$(uname -r)
+```
+
+Download and install [CUDA Toolkit 8.0][cuda]. Pick *Installer Type*: `deb
+(network)` and follow its *Installation Instructions*. PATH needs to include
+CUDA Toolkit 8.0 binaries.
+
+```
+echo 'export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}' >> ~/.profile
+source ~/.profile
+```
+
+Fore more information see [NVIDIA CUDA Installation Guide for
+Linux][cuda_install].
+
+
+Download [cuDNN v5.1][cuDNN]. You first need to register before the download.
+Extract it to `/usr/local` directory, in which CUDA Toolkit 8.0 was installed.
+
+```
+sudo tar -xzf cudnn-8.0-linux-x64-v5.1.tgz -C /usr/local
+```
+
+Install NVIDIA CUDA Profile Tools Interface.
+
+```
+sudo apt-get install libcupti-dev
+```
+
+Now we are ready to install GPU-enabled TensorFlow.
+
 ```
 source activate <env-name-cpu>
 # URL for TensorFlow installation assuming python3.6 for <env-name-gpu>
 TF_PYTHON_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.1.0rc2-cp36-cp36m-linux_x86_64.whl
 pip install --ignore-installed --upgrade $TF_PYTHON_URL
 ```
-
 
 Make sure the python version of your environment is consistent with
 `TF_PYTHON_URL`.  See [Installing TensorFlow on Ubuntu][tf_install] for
@@ -121,3 +154,6 @@ different `TF_PYTHON_URL` values.
 [anaconda]: https://www.continuum.io/downloads
 [cv2_install]: https://rivercitylabs.org/up-and-running-with-opencv3-and-python-3-anaconda-edition/
 [tf_install]: https://www.tensorflow.org/install/install_linux
+[cuda]: https://developer.nvidia.com/cuda-downloads
+[cuda_install]: http://docs.nvidia.com/cuda/cuda-installation-guide-linux
+[cuDNN]: https://developer.nvidia.com/cudnn
