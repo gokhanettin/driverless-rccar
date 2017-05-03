@@ -94,7 +94,9 @@ def main():
                 if (cv2.waitKey(1) & 0xFF) == ord('q'):  # Hit `q` to exit
                     break
 
-                timestamp = "{:%Y%m%d%H%M%S}".format(datetime.datetime.now())
+                # timestamp in miliseconds
+                timestamp = round(datetime.datetime.now().timestamp() * 1000)
+
                 datasetfile.write(DATASETFILEROW.format(
                     timestep=timestep, timestamp=timestamp,
                     speed_cmd=speed_cmd, steering_cmd=steering_cmd,
