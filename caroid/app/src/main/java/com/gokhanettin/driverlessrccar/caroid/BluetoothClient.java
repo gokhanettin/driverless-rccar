@@ -306,12 +306,12 @@ class BluetoothClient {
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
             setName("ConnectedThread");
-            int c = 0;
+            int c;
             // Keep listening to the InputStream while connected
             while (mState == STATE_CONNECTED) {
                 try {
                     // Read from the InputStream
-                    // "[<throttle_cmd>;<steering_cmd>]"
+                    // "[<speed_cmd>;<steering_cmd>;<speed>;<steering>]"
                     while(mmInStream.available() > 0) {
                         c = mmInStream.read();
                         if (c == '[') {
@@ -338,7 +338,7 @@ class BluetoothClient {
         }
 
         void send(Output out, int delay) {
-            // "[<throttle_cmd>;<steering_cmd>]"
+            // "[<speed_cmd>;<steering_cmd>]"
             String string = String.format(Locale.US, "[%d;%d]",
                     out.speedCommand, out.steeringCommand);
             byte[] buffer = string.getBytes();
@@ -391,7 +391,7 @@ class BluetoothClient {
         }
 
         private void parse() {
-            // "<throttle_cmd>;<steering_cmd>;<velocity>;<steering>"
+            // "<speed_cmd>;<steering_cmd>;<speed>;<steering>"
             String string = mmStringBuilder.toString();
             Log.d(TAG, "Parse string: " + string);
             String tokens[] = string.split(";");

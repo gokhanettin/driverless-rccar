@@ -113,6 +113,11 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         @Override
+        protected void onCommunicationModeRequested(String newMode) {
+            Log.d(TAG, "(Tcp) onCommunicationModeRequested: " + newMode);
+        }
+
+        @Override
         protected void onReceived(int speedCmd, int steeringCmd) {
 
         }

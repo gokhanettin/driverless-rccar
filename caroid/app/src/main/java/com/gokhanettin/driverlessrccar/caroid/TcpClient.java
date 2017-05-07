@@ -191,6 +191,7 @@ public class TcpClient {
     }
 
     public class Input {
+        public String newCommunicationMode;
         public int speedCommand;
         public int steeringCommand;
     }
@@ -289,7 +290,7 @@ public class TcpClient {
             while (mState == STATE_CONNECTED) {
                 try {
                     // Read from the InputStream
-                    // "[<throttle_cmd>;<steering_cmd>]"
+                    // "[<speed_cmd>;<steering_cmd>]"
                     while (mmInStream.available() > 0) {
                         c = mmInStream.read();
                         if (c == '[') {
@@ -362,15 +363,23 @@ public class TcpClient {
         }
 
         private void parse() {
-            // "<throttle_cmd>;<steering_cmd>"
+            // "<mode>" or "<speed_cmd>;<steering_cmd>"
             String string = mmStringBuilder.toString();
             Log.d(TAG, "Parse string: " + string);
-            String tokens[] = string.split(";");
-            int commands[] = new int[tokens.length];
-            for (int i = 0; i < commands.length; ++i) {
-                commands[i] = Integer.parseInt(tokens[i]);
+            Input in = new Input();
+            if (string.length() == 1) {
+                // communication mode requested
+                in.newCommunicationMode = string;
+                in.speedCommand = 0;
+                in.steeringCommand = 0;
+            } else {
+                // commands received
+                in.newCommunicationMode = null;
+                String tokens[] = string.split(";");
+                in.speedCommand = Integer.parseInt(tokens[0]);
+                in.steeringCommand = Integer.parseInt(tokens[1]);
             }
-            mHandler.obtainMessage(MESSAGE_RECEIVE, -1, -1, commands).sendToTarget();
+            mHandler.obtainMessage(MESSAGE_RECEIVE, -1, -1, in).sendToTarget();
         }
     }
 }

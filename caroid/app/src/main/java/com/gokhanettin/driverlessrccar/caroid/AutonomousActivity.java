@@ -10,8 +10,8 @@ import android.widget.Toast;
 
 import java.util.Locale;
 
-public class AcquisitionActivity extends AppCompatActivity {
-    private static final String TAG = "AcquisitionActivity";
+public class AutonomousActivity extends AppCompatActivity {
+    private static final String TAG = "AutonomousActivity";
     private static final int REQUEST_CONNECTION = 0;
 
     private BluetoothClient mBluetoothClient;
@@ -19,20 +19,22 @@ public class AcquisitionActivity extends AppCompatActivity {
     private CameraPreview mCameraPreview;
     private CameraManager mCameraManager;
     private boolean mIsTcpSendOk = false;
+    private String mIP;
+    private int mPort;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_acquisition);
+        setContentView(R.layout.activity_autonomous);
 
         mCameraManager = new CameraManager();
         // Create our Preview view and set it as the content of our activity.
         mCameraPreview = new CameraPreview(this, mCameraManager.getCamera());
-        final FrameLayout previewLayout = (FrameLayout) findViewById(R.id.acquisition_preview);
+        final FrameLayout previewLayout = (FrameLayout) findViewById(R.id.autonomous_preview);
         previewLayout.addView(mCameraPreview);
         mBluetoothClient = new BluetoothClient(mBluetoothHandler);
         mTcpClient = new TcpClient(mTcpHandler);
-        Intent intent = new Intent(AcquisitionActivity.this, ConnectionActivity.class);
+        Intent intent = new Intent(AutonomousActivity.this, ConnectionActivity.class);
         Log.d(TAG, "Requesting bluetooth and tcp connections");
         startActivityForResult(intent, REQUEST_CONNECTION);
     }
@@ -77,15 +79,11 @@ public class AcquisitionActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CONNECTION) {
             if (resultCode == RESULT_OK) {
                 String btAddress = data.getStringExtra(ConnectionActivity.EXTRA_BT_ADDRESS);
-                String ip = data.getStringExtra(ConnectionActivity.EXTRA_IP);
-                int port = data.getIntExtra(ConnectionActivity.EXTRA_PORT, 5555);
+                mIP = data.getStringExtra(ConnectionActivity.EXTRA_IP);
+                mPort = data.getIntExtra(ConnectionActivity.EXTRA_PORT, 5555);
                 if (mBluetoothClient.getState() == BluetoothClient.STATE_NONE) {
                     Log.d(TAG, "Connecting to bluetooth  device at " + btAddress);
                     mBluetoothClient.connect(btAddress);
-                }
-                if (mTcpClient.getState() == TcpClient.STATE_NONE) {
-                    Log.d(TAG, "Connecting to server at " + ip + ":" + port);
-                    mTcpClient.connect(ip, port);
                 }
             } else {
                 finish();
@@ -117,7 +115,7 @@ public class AcquisitionActivity extends AppCompatActivity {
                                   float speed, float steering) {
             Locale locale = Locale.US;
             Log.d(TAG, "(Bluetooth) onReceived: " + String.format(locale,
-                    "[%d;%d;%.3f;%.3f]", speedCmd, steeringCmd, speed, steering));
+                    "[%d;%d;%.2f;%.2f]", speedCmd, steeringCmd, speed, steering));
             if (mIsTcpSendOk) {
                 mTcpClient.send(speedCmd, steeringCmd, speed, steering, mCameraPreview);
             }
@@ -125,7 +123,9 @@ public class AcquisitionActivity extends AppCompatActivity {
 
         @Override
         protected void onSent(int speedCmd, int steeringCmd) {
-
+            Locale locale = Locale.US;
+            Log.d(TAG, "(Bluetooth) onSent: " + String.format(locale,
+                    "[%d;%d]", speedCmd, steeringCmd));
         }
 
         @Override
@@ -136,12 +136,17 @@ public class AcquisitionActivity extends AppCompatActivity {
         @Override
         protected void onConnectionEstablished(String connectedDeviceName) {
             Log.d(TAG, "(Bluetooth) onConnectionEstablished: " + connectedDeviceName);
-            mBluetoothClient.requestCommunicationMode(BluetoothClient.MODE_MONITOR);
+            // When we are connecting to server, we are sure that
+            // the Bluetooth connection is already established.
+            if (mTcpClient.getState() == TcpClient.STATE_NONE) {
+                Log.d(TAG, "Connecting to server at " + mIP + ":" + mPort);
+                mTcpClient.connect(mIP, mPort);
+            }
         }
 
         @Override
         protected void onConnectionError(String error) {
-            Log.d(TAG, "(Bluetooth) OnConnectionError: " + error);
+            Log.d(TAG, "(Bluetooth) onConnectionError: " + error);
             Toast.makeText(getApplicationContext(), error, Toast.LENGTH_LONG).show();
         }
     };
@@ -172,25 +177,34 @@ public class AcquisitionActivity extends AppCompatActivity {
 
         @Override
         protected void onReceived(int speedCmd, int steeringCmd) {
-
+            Locale locale = Locale.US;
+            Log.d(TAG, "(Tcp) onReceived: " + String.format(locale,
+                    "[%d;%d]", speedCmd, steeringCmd));
+            mBluetoothClient.send(speedCmd, steeringCmd);
         }
 
         @Override
         protected void onSent(int speedCmd, int steeringCmd,
                               float speed, float steering, byte[] jpeg) {
-            Log.d(TAG, "(Tcp) onSent: " + String.format(Locale.US, "header=[%d;%d;%.3f;%.3f;%d]",
+            Log.d(TAG, "(Tcp) onSent: " + String.format(Locale.US, "header=[%d;%d;%.2f;%.2f;%d]",
                     speedCmd, steeringCmd, speed, steering, jpeg.length));
         }
 
         @Override
         protected void onConnectionEstablished(String serverAddress) {
+            Log.d(TAG, "(Tcp) onConnectionEstablished: " + serverAddress);
             mIsTcpSendOk = true;
+            // The Bluetooth connection is already established before the TCP connection.
+            // We can safely request communication mode after TCP connection established.
+            mBluetoothClient.requestCommunicationMode(BluetoothClient.MODE_CONTROL);
         }
 
         @Override
         protected void onConnectionError(String error) {
-            Toast.makeText(getApplicationContext(), error, Toast.LENGTH_LONG).show();
+            Log.d(TAG, "(Tcp) onConnectionError: " + error);
             mIsTcpSendOk = false;
+            Toast.makeText(getApplicationContext(), error, Toast.LENGTH_LONG).show();
+            mBluetoothClient.requestCommunicationMode(BluetoothClient.MODE_NONE);
         }
     };
 

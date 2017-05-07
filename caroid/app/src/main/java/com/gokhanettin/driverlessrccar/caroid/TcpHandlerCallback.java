@@ -16,7 +16,11 @@ abstract class TcpHandlerCallback implements Handler.Callback {
                 break;
             case TcpClient.MESSAGE_RECEIVE:
                 TcpClient.Input in = (TcpClient.Input) msg.obj;
-                onReceived(in.speedCommand, in.steeringCommand);
+                if (in.newCommunicationMode == null) {
+                    onReceived(in.speedCommand, in.steeringCommand);
+                } else {
+                    onCommunicationModeRequested(in.newCommunicationMode);
+                }
                 break;
             case TcpClient.MESSAGE_SEND:
                 TcpClient.Output out = (TcpClient.Output) msg.obj;
@@ -38,6 +42,7 @@ abstract class TcpHandlerCallback implements Handler.Callback {
     protected abstract void onReceived(int speedCmd, int steeringCmd);
     protected abstract void onSent(int speedCmd, int steeringCmd, float speed,
                                    float steering, byte[] jpeg);
+    protected abstract void onCommunicationModeRequested(String newMode);
     protected abstract void onConnectionEstablished(String serverAddress);
     protected abstract void onConnectionError(String error);
 }

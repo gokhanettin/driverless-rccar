@@ -53,7 +53,10 @@ public class MainActivity extends AppCompatActivity {
         buttonAutonomousDrive.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO
+                Intent intent = new Intent(MainActivity.this,
+                        AutonomousActivity.class);
+                Log.d(TAG, "Starting AcquisitionActivity");
+                startActivity(intent);
             }
         });
     }

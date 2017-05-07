@@ -222,7 +222,7 @@ void loop()
             // 20 Hz Task
             speed = getSpeed();
             steering = getSteering();
-            if (mode != NO_COMM) {
+            if (mode == CO_COMM || mode == MO_COMM) {
                 serialWrite();
             }
         }
