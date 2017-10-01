@@ -110,13 +110,7 @@ sudo apt-get install linux-headers-$(uname -r)
 ```
 
 Download and install [CUDA Toolkit 8.0][cuda]. Pick *Installer Type*: `deb
-(network)` and follow its *Installation Instructions*. PATH needs to include
-CUDA Toolkit 8.0 binaries.
-
-```
-echo 'export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}' >> ~/.profile
-source ~/.profile
-```
+(network)` and follow its *Installation Instructions*.
 
 Fore more information see [NVIDIA CUDA Installation Guide for
 Linux][cuda_install].
@@ -127,6 +121,14 @@ Extract it to `/usr/local` directory, in which CUDA Toolkit 8.0 was installed.
 
 ```
 sudo tar -xzf cudnn-8.0-linux-x64-v5.1.tgz -C /usr/local
+```
+
+Edit your `PATH` and `LD_LIBRARY_PATH` as follows.
+
+```
+export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+source ~/.profile
 ```
 
 Install NVIDIA CUDA Profile Tools Interface.
