@@ -20,18 +20,18 @@ with open(dataset_file, 'r') as csv:
     for line in csv.readlines():
         line = line.strip()
         (_, _, imagefile, steering_cmd, speed_cmd, _, _) = line.split(";")
-        steering_cmd = int(steering_cmd)
-        speed_cmd = int(speed_cmd)
+        steering_cmd = float(steering_cmd)
+        speed_cmd = float(speed_cmd)
 
         image = cv2.imread(image_dir + imagefile, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        image = cv2.resize(image, (480, 320), interpolation=cv2.INTER_CUBIC)
+        image = cv2.resize(image, (640, 480), interpolation=cv2.INTER_CUBIC)
         # Count images
         cv2.putText(image, imagefile, (5, 35),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255)
 
         cv2.putText(image, "Steering Command: {}".
-                    format(steering_cmd), (5, 315),
+                    format(steering_cmd), (5, 475),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255)
 
         steering_cmd = get_mapped_steering_command(steering_cmd)

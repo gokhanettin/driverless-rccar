@@ -10,8 +10,8 @@ DATASET_FILE_HEADER = "timestep;timestamp;imagefile;steering_cmd;speed_cmd;steer
 COMMAND_NAMES = DATASET_FILE_HEADER[3:5]  # steering_cmd, speed_cmd
 NUM_COMMANDS = len(COMMAND_NAMES)
 
-HEIGHT = 144
-WIDTH = 176
+HEIGHT = 480
+WIDTH = 640
 CHANNELS = 3  # RGB
 
 

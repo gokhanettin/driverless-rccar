@@ -19,8 +19,8 @@ dtype = [
     ("timestep", "int"),
     ("timestamp", "str"),
     ("imagefile", "str"),
-    ("steering_cmd", "int"),
-    ("speed_cmd", "int"),
+    ("steering_cmd", "float"),
+    ("speed_cmd", "float"),
     ("steering", "float"),
     ("speed", "float"),
 ]
