@@ -123,13 +123,14 @@ Extract it to `/usr/local` directory, in which CUDA Toolkit 8.0 was installed.
 sudo tar -xzf cudnn-8.0-linux-x64-v5.1.tgz -C /usr/local
 ```
 
-Edit your `PATH` and `LD_LIBRARY_PATH` as follows.
+Add the following lines to your `~/.bashrc` file.
 
 ```
 export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-source ~/.profile
 ```
+
+and source it with `source ~/.bashrc`.
 
 Install NVIDIA CUDA Profile Tools Interface.
 
