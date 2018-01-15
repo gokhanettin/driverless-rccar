@@ -73,8 +73,8 @@ def do_test():
                                               prediction_op],
                                               feed_dict=feed_dict)
 
-            predicted = np.round(prediction).flatten().astype(np.int32)
-            expected = np.array(expected, dtype=np.int32)
+            predicted = np.array(prediction).flatten().astype(np.float)
+            expected = np.array(expected, dtype=np.float)
             csv_writer.writerow((step, imfile, predicted[0], expected[0],
                                  predicted[1], expected[1]))
             csv_file.flush()

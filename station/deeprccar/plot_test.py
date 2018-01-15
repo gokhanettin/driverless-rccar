@@ -18,10 +18,10 @@ args = parser.parse_args()
 dtype = [
     ("timestep", "int"),
     ("image_file", "str"),
-    ("steering_predicted", "int"),
-    ("steering_expected", "int"),
-    ("speed_predicted", "int"),
-    ("speed_expected", "int"),
+    ("steering_predicted", "float"),
+    ("steering_expected", "float"),
+    ("speed_predicted", "float"),
+    ("speed_expected", "float"),
 ]
 
 

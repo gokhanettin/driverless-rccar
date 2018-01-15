@@ -20,7 +20,7 @@ args = parser.parse_args()
 
 fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 video_writer = cv2.VideoWriter("{}/{}.avi".format(args.video_dir, "test"),
-                               fourcc, 20.0, (480, 320))
+                               fourcc, 20.0, (640, 480))
 
 with open(args.csv_file, 'r') as csv:
     csv.readline() #  skip header row
@@ -29,21 +29,22 @@ with open(args.csv_file, 'r') as csv:
         steering_predicted, steering_expected,
         speed_predicted, speed_expected) = line.strip().split(";")
         timestep = int(timestep)
-        steering_predicted = int(steering_predicted)
-        steering_expected = int(steering_expected)
-        speed_predicted = int(speed_predicted)
-        speed_expected = int(speed_expected)
+        steering_predicted = float(steering_predicted)
+        steering_expected = float(steering_expected)
+        speed_predicted = float(speed_predicted)
+        speed_expected = float(speed_expected)
 
         image = cv2.imread(image_file, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        image = cv2.resize(image, (480, 320), interpolation=cv2.INTER_CUBIC)
+        image = cv2.resize(image, (640, 480), interpolation=cv2.INTER_CUBIC)
 
         # Count images
         cv2.putText(image, "Image: {}".format(timestep), (5, 35),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255)
 
-        cv2.putText(image, "Steering Command: (predicted, expected)=({},{})".
-                    format(steering_predicted, steering_expected), (5, 315),
+        cv2.putText(image,
+                    "Steering Command: (predicted, expected)=({:.4f},{:.4f})".
+                    format(steering_predicted, steering_expected), (5, 475),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255)
 
         steering_expected = get_mapped_steering_command(steering_expected)
