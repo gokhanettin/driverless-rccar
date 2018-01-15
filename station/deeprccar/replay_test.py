@@ -18,24 +18,6 @@ parser.add_argument("--video_dir",
 
 args = parser.parse_args()
 
-
-
-# Utility function to map float `x` from input range to output range.
-def map_range(x, in_min, in_max, out_min, out_max):
-    y = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-    return int(y)
-
-
-
-def get_mapped_steering(cmd):
-    return map_range(cmd, STEERING_COMMAND_RIGHT, STEERING_COMMAND_LEFT,
-                     -100, 100)
-
-
-def get_mapped_speed(cmd):
-    return map_range(cmd, SPEED_COMMAND_FORWARD, SPEED_COMMAND_BACKWARD,
-                     -100, 100)
-
 fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 video_writer = cv2.VideoWriter("{}/{}.avi".format(args.video_dir, "test"),
                                fourcc, 20.0, (480, 320))
